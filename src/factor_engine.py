@@ -293,9 +293,11 @@ def build_factor_portfolio(
 
     # Identify monthly rebalance dates (first trading day of each month)
     all_dates = factor_df.index
+    # First trading day of each calendar month (parenthesised: `|` binds tighter than `>`)
+    prev_month = all_dates.to_series().shift(1).dt.month.fillna(-1).to_numpy()
     rebalance_dates = all_dates[
-        all_dates.to_series().diff().dt.days.fillna(30) > 15
-        | (all_dates.month != all_dates.to_series().shift(1).dt.month.fillna(-1))
+        (all_dates.to_series().diff().dt.days.fillna(30).to_numpy() > 15)
+        | (all_dates.month.to_numpy() != prev_month)
     ]
 
     records: list[dict] = []
