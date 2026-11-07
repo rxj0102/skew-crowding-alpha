@@ -1,5 +1,7 @@
 # Options Implied Skew as a Regime Classifier for Equity Factor Crowding
 
+[![CI](https://github.com/rxj0102/skew-crowding-alpha/actions/workflows/ci.yml/badge.svg)](https://github.com/rxj0102/skew-crowding-alpha/actions/workflows/ci.yml)
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -255,15 +257,8 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 
 ## Key Results
 
-*Placeholder — run the full pipeline to populate.*
+**Status:** no results are published yet. They depend on live data that was not available when this repository was last updated. Run the full pipeline to generate them. Results will be added here only from that run.
 
-```
-Strategy             Ann. Return    Sharpe    Max Drawdown
-─────────────────────────────────────────────────────────
-Baseline (Momentum)  TBD%           TBD       TBD%
-Regime-Filtered      TBD%           TBD       TBD%
-Improvement          TBD%           TBD×      TBD%
-```
 
 ---
 
