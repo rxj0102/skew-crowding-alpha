@@ -1,0 +1,12 @@
+sector_name,etf_ticker,defensive_flag
+Information Technology,XLK,False
+Financials,XLF,False
+Health Care,XLV,True
+Consumer Discretionary,XLY,False
+Communication Services,XLC,False
+Industrials,XLI,False
+Consumer Staples,XLP,True
+Energy,XLE,False
+Utilities,XLU,True
+Real Estate,XLRE,True
+Materials,XLB,False
