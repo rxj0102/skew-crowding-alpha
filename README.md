@@ -262,6 +262,19 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 
 ---
 
+### Signal documentation
+
+| Field | Value |
+|---|---|
+| Signal | Factor crowding index CI = median rolling 20-day put-skew z-score of the top factor quintile; RegimeZ = 60-day z-score of CI |
+| Factors | Momentum (12-1), low volatility (63-day), quality (252-day drawdown proxy); universe of 100 large caps |
+| Skew definition | IV of the 25-delta put minus IV of the ATM put |
+| Expected sign | High RegimeZ precedes factor drawdowns, so factor exposure is cut to 0.75 (ELEVATED) or 0.50 (WARNING), using RegimeZ lagged one day |
+| Timing | Monthly rebalance, `BACKTEST_START` 2010-01-01 to `BACKTEST_END` 2023-12-31 |
+| Inputs | Daily single-name option skew (Barchart scraper, yfinance fallback), prices (yfinance) |
+| Code | `src/skew_engine.py`, `src/factor_engine.py`, `src/crowding_detector.py`, `src/regime_filter.py`, `src/backtest.py` |
+| Status | Not run. The backtest needs 14 years of daily single-name skew, which no free source in this repo provides. The yfinance fallback only returns the current chain; before this fix it stamped today's skew onto historical dates. It now returns an empty result for any date older than 3 days |
+
 ## Data Sources
 
 | Data | Source | Cost | Notes |
