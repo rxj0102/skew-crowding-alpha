@@ -262,6 +262,19 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 
 ---
 
+### Signal documentation
+
+| Field | Value |
+|---|---|
+| Signal | Factor crowding index CI = median rolling 20-day put-skew z-score of the top factor quintile; RegimeZ = 60-day z-score of CI |
+| Factors | Momentum (12-1), low volatility (63-day), quality (252-day drawdown proxy); universe of 100 large caps |
+| Skew definition | IV of the 25-delta put minus IV of the ATM put |
+| Expected sign | High RegimeZ precedes factor drawdowns, so factor exposure is cut to 0.75 (ELEVATED) or 0.50 (WARNING), using RegimeZ lagged one day |
+| Timing | Monthly rebalance, `BACKTEST_START` 2010-01-01 to `BACKTEST_END` 2023-12-31 |
+| Inputs | Daily single-name option skew (Barchart scraper, yfinance fallback), prices (yfinance) |
+| Code | `src/skew_engine.py`, `src/factor_engine.py`, `src/crowding_detector.py`, `src/regime_filter.py`, `src/backtest.py` |
+| Status | Not run. The backtest needs 14 years of daily single-name skew, which no free source in this repo provides. The yfinance fallback only returns the current chain; before this fix it stamped today's skew onto historical dates. It now returns an empty result for any date older than 3 days |
+
 ## Data Sources
 
 | Data | Source | Cost | Notes |
@@ -288,6 +301,36 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 5. **Transaction costs**: The 10 bps one-way assumption may be conservative for large-cap equity ETFs but optimistic for small-cap single names with wide spreads. Regime transitions that generate high turnover will be more impacted than the simple model suggests.
 
 ---
+
+## Reproducibility
+
+### Data availability
+
+All inputs come from free, public sources. No paid data or API keys are required unless noted.
+
+- Yahoo Finance via the yfinance package (free, no key)
+- Cboe public data (free)
+- Files shipped in the `data/` folder of this repository
+
+### Computational requirements
+
+- Python 3.12.3. Every dependency version is pinned in `uv.lock`.
+- Checked on Linux x86_64 with 2 CPU cores and 8 GB RAM. No GPU is needed.
+
+```bash
+pip install uv     # once
+uv sync            # installs the exact pinned environment
+uv run pytest -q   # runs the test suite
+```
+
+### Runtime
+
+The test suite (9 tests) finishes in about 30 seconds on the machine above, including any data downloads it triggers.
+
+### Citation
+
+Citation metadata is in `CITATION.cff`. GitHub turns it into a Cite this repository button on the repo page.
+
 
 ## Academic References
 

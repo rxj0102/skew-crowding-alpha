@@ -288,6 +288,9 @@ _BARCHART_HEADERS = {
 }
 
 
+YFINANCE_MAX_AGE_DAYS = 3
+
+
 def _compute_skew_from_yfinance(ticker: str, date: str) -> dict:
     """Fallback skew calculation using yfinance options chain.
 
@@ -313,6 +316,10 @@ def _compute_skew_from_yfinance(ticker: str, date: str) -> dict:
         * 25-delta put ≈ strike at 90–95% of spot (rough approximation)
     This is less accurate than true 25-delta computed from a vol surface.
     """
+    # yfinance only serves the current option chain. Using it for a past date would stamp
+    # today's skew onto that date, so historical requests get an empty result instead.
+    if (pd.Timestamp.today().normalize() - pd.Timestamp(date).normalize()).days > YFINANCE_MAX_AGE_DAYS:
+        return _empty_skew_dict(ticker, date, "yfinance_no_history")
     try:
         t = yf.Ticker(ticker)
         expirations = t.options

@@ -78,3 +78,5 @@ logs/
 
 # Local config overrides
 config_local.py
+
+.venv/
