@@ -10,9 +10,9 @@
 
 ## Abstract
 
-Equity factor strategies — momentum, low volatility, quality — have earned durable risk premia over decades, but are periodically subject to sudden, severe drawdowns driven by crowding: the simultaneous exit of overlapping institutional positions. Traditional crowding metrics (13F overlap analysis, return correlation, bid-ask spread widening) are *lagging* by construction: they confirm that a crowd existed after it has already begun to unwind.
+Equity factor strategies (momentum, low volatility, quality) have earned durable risk premia over decades, but are periodically subject to sudden, severe drawdowns driven by crowding: the simultaneous exit of overlapping institutional positions. Traditional crowding metrics (13F overlap analysis, return correlation, bid-ask spread widening) are *lagging* by construction: they confirm that a crowd existed after it has already begun to unwind.
 
-This repository implements a framework that uses the **options market's forward-looking hedging demand** as a *leading* indicator of factor crowding risk. When institutional investors accumulate large factor positions, they simultaneously buy downside protection — demand that manifests as elevated out-of-the-money put implied volatility relative to at-the-money IV (the *put skew*). By aggregating single-name put skew signals across a factor's constituents into a **Factor Crowding Index**, and classifying the current market regime, this framework aims to provide actionable advance warning of factor unwind risk.
+This repository implements a framework that uses the **options market's forward-looking hedging demand** as a *leading* indicator of factor crowding risk. When institutional investors accumulate large factor positions, they simultaneously buy downside protection: demand that manifests as elevated out-of-the-money put implied volatility relative to at-the-money IV (the *put skew*). By aggregating single-name put skew signals across a factor's constituents into a **Factor Crowding Index**, and classifying the current market regime, this framework aims to provide actionable advance warning of factor unwind risk.
 
 The central contribution is a regime-conditioned portfolio construction rule: in WARNING regimes (crowding index z-score > 1.5), factor exposure is reduced to 50% with the balance allocated to a defensive ETF basket, providing capital protection during factor crashes while maintaining market participation.
 
@@ -37,7 +37,7 @@ Existing crowding measures are **lagging by construction**:
 | Bid-ask spread widening | Liquidity deterioration during selling | Concurrent |
 | Factor volatility elevation | Realised vol during unwind | Concurrent |
 
-**This framework uses the options market's forward-looking hedging demand as a leading indicator of factor unwind risk.** When large institutional investors hedge concentrated factor positions, they buy OTM puts *before* the unwind begins. This demand drives up put implied volatility relative to ATM — creating an observable signal in the options market *before* the equity market registers the stress.
+**This framework uses the options market's forward-looking hedging demand as a leading indicator of factor unwind risk.** When large institutional investors hedge concentrated factor positions, they buy OTM puts *before* the unwind begins. This demand drives up put implied volatility relative to ATM: creating an observable signal in the options market *before* the equity market registers the stress.
 
 The key insight: **the options tail wags the equity dog.** Options markets, dominated by sophisticated institutional hedgers, often price in risk before it becomes visible in equity price action.
 
@@ -138,12 +138,12 @@ Preliminary validation table (populate after running the full pipeline):
 
 | Event | Start Date | Warning Triggered | Days Lead Time | Peak Crowding |
 |-------|-----------|------------------|---------------|---------------|
-| Quant Quake Aug 2007 | 2007-08-06 | — | — | — |
-| GFC Deleveraging Sep 2008 | 2008-09-15 | — | — | — |
-| Vol Spike Feb 2018 | 2018-02-05 | — | — | — |
-| COVID Crash Mar 2020 | 2020-03-16 | — | — | — |
-| Momentum Crash Sep 2020 | 2020-09-04 | — | — | — |
-| Rate Shock Nov 2021 | 2021-11-26 | — | — | — |
+| Quant Quake Aug 2007 | 2007-08-06 | n/a | n/a | n/a |
+| GFC Deleveraging Sep 2008 | 2008-09-15 | n/a | n/a | n/a |
+| Vol Spike Feb 2018 | 2018-02-05 | n/a | n/a | n/a |
+| COVID Crash Mar 2020 | 2020-03-16 | n/a | n/a | n/a |
+| Momentum Crash Sep 2020 | 2020-09-04 | n/a | n/a | n/a |
+| Rate Shock Nov 2021 | 2021-11-26 | n/a | n/a | n/a |
 
 *Run `python -m src.crowding_detector --factor momentum` to populate this table.*
 
@@ -251,7 +251,7 @@ visualize.plot_cumulative_returns_comparison(baseline_bt, filtered_bt)
 jupyter notebook notebooks/01_exploratory_analysis.ipynb
 ```
 
-The notebook contains 10 sections with fully reproducible synthetic data — no external API calls required for the demonstration path.
+The notebook contains 10 sections with fully reproducible synthetic data: no external API calls required for the demonstration path.
 
 ---
 
@@ -261,6 +261,19 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 
 
 ---
+
+### Signal documentation
+
+| Field | Value |
+|---|---|
+| Signal | Factor crowding index CI = median rolling 20-day put-skew z-score of the top factor quintile; RegimeZ = 60-day z-score of CI |
+| Factors | Momentum (12-1), low volatility (63-day), quality (252-day drawdown proxy); universe of 100 large caps |
+| Skew definition | IV of the 25-delta put minus IV of the ATM put |
+| Expected sign | High RegimeZ precedes factor drawdowns, so factor exposure is cut to 0.75 (ELEVATED) or 0.50 (WARNING), using RegimeZ lagged one day |
+| Timing | Monthly rebalance, `BACKTEST_START` 2010-01-01 to `BACKTEST_END` 2023-12-31 |
+| Inputs | Daily single-name option skew (Barchart scraper, yfinance fallback), prices (yfinance) |
+| Code | `src/skew_engine.py`, `src/factor_engine.py`, `src/crowding_detector.py`, `src/regime_filter.py`, `src/backtest.py` |
+| Status | Not run. The backtest needs 14 years of daily single-name skew, which no free source in this repo provides. The yfinance fallback only returns the current chain; before this fix it stamped today's skew onto historical dates. It now returns an empty result for any date older than 3 days |
 
 ## Data Sources
 
@@ -289,21 +302,51 @@ The notebook contains 10 sections with fully reproducible synthetic data — no 
 
 ---
 
+## Reproducibility
+
+### Data availability
+
+All inputs come from free, public sources. No paid data or API keys are required unless noted.
+
+- Yahoo Finance via the yfinance package (free, no key)
+- Cboe public data (free)
+- Files shipped in the `data/` folder of this repository
+
+### Computational requirements
+
+- Python 3.12.3. Every dependency version is pinned in `uv.lock`.
+- Checked on Linux x86_64 with 2 CPU cores and 8 GB RAM. No GPU is needed.
+
+```bash
+pip install uv     # once
+uv sync            # installs the exact pinned environment
+uv run pytest -q   # runs the test suite
+```
+
+### Runtime
+
+The test suite (9 tests) finishes in about 30 seconds on the machine above, including any data downloads it triggers.
+
+### Citation
+
+Citation metadata is in `CITATION.cff`. GitHub turns it into a Cite this repository button on the repo page.
+
+
 ## Academic References
 
-1. **Gârleanu, N. & Pedersen, L.H. (2011)**. "Margin-Based Asset Pricing and Deviations from the Law of One Price." *Review of Financial Studies*, 24(6), 1980–2022. — Foundational framework linking leverage constraints to crowding and asset pricing deviations.
+1. **Gârleanu, N. & Pedersen, L.H. (2011)**. *Margin-Based Asset Pricing and Deviations from the Law of One Price.* *Review of Financial Studies*, 24(6), 1980–2022.: Foundational framework linking leverage constraints to crowding and asset pricing deviations.
 
-2. **Stein, J.C. (2009)**. "Sophisticated Investors and Market Stability." *Brookings Papers on Economic Activity*, 2009(1), 235–287. — Documents how sophisticated investors (hedge funds, quant strategies) can destabilise markets by trading against each other during crowded unwinds.
+2. **Stein, J.C. (2009)**. *Sophisticated Investors and Market Stability.* *Brookings Papers on Economic Activity*, 2009(1), 235–287.: Documents how sophisticated investors (hedge funds, quant strategies) can destabilise markets by trading against each other during crowded unwinds.
 
-3. **Frazzini, A. & Pedersen, L.H. (2014)**. "Betting Against Beta." *Journal of Financial Economics*, 111(1), 1–23. — The low-volatility anomaly and its connection to leverage constraints; highly relevant to understanding low-vol factor crowding.
+3. **Frazzini, A. & Pedersen, L.H. (2014)**. *Betting Against Beta.* *Journal of Financial Economics*, 111(1), 1–23.: The low-volatility anomaly and its connection to leverage constraints; highly relevant to understanding low-vol factor crowding.
 
-4. **Han, B. (2008)**. "Investor Sentiment and Option Prices." *Review of Financial Studies*, 21(1), 387–414. — Empirical evidence that options prices, particularly put skew, reflect investor sentiment and predict future returns. Direct antecedent for the skew-as-signal approach.
+4. **Han, B. (2008)**. *Investor Sentiment and Option Prices.* *Review of Financial Studies*, 21(1), 387–414.: Empirical evidence that options prices, particularly put skew, reflect investor sentiment and predict future returns. Direct antecedent for the skew-as-signal approach.
 
-5. **Asness, C., Moskowitz, T. & Pedersen, L.H. (2013)**. "Value and Momentum Everywhere." *Journal of Finance*, 68(3), 929–985. — Comprehensive documentation of momentum and value premia across asset classes; provides the factor framework this research builds on.
+5. **Asness, C., Moskowitz, T. & Pedersen, L.H. (2013)**. *Value and Momentum Everywhere.* *Journal of Finance*, 68(3), 929–985.: Comprehensive documentation of momentum and value premia across asset classes; provides the factor framework this research builds on.
 
-6. **Koijen, R., Moskovitz, T., Pedersen, L.H. & Vrugt, E. (2018)**. "Carry." *Journal of Financial Economics*, 127(2), 197–225. — Relevant methodology for cross-asset factor construction and crowding analysis.
+6. **Koijen, R., Moskovitz, T., Pedersen, L.H. & Vrugt, E. (2018)**. *Carry.* *Journal of Financial Economics*, 127(2), 197–225.: Relevant methodology for cross-asset factor construction and crowding analysis.
 
-7. **Ang, A., Hodrick, R., Xing, Y. & Zhang, X. (2006)**. "The Cross-Section of Volatility and Expected Returns." *Journal of Finance*, 61(1), 259–299. — The low-volatility anomaly, foundational to the low-vol factor in this framework.
+7. **Ang, A., Hodrick, R., Xing, Y. & Zhang, X. (2006)**. *The Cross-Section of Volatility and Expected Returns.* *Journal of Finance*, 61(1), 259–299.: The low-volatility anomaly, foundational to the low-vol factor in this framework.
 
 ---
 
